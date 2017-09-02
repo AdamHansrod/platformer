@@ -1,11 +1,19 @@
 FROM alpine:edge
 
-RUN apk --update upgrade && apk add openjdk8-jre-base
-RUN mkdir -p /opt/app/ && adduser -HD app
+# Let's assume all our apps will need jdk8
+RUN apk --update upgrade && \
+     apk add openjdk8-jre-base && \
+     apk add --update curl && \
+     rm -rf /var/cache/apk/*
 
-ADD scripts/startup.sh /opt/app/startup.sh
+RUN mkdir -p /opt/app/
+RUN adduser -HD app
+
+COPY scripts/startup.sh /opt/app/startup.sh
+RUN chown -R app:app /opt/app
+RUN chmod 777 /opt/app/startup.sh
 
 USER app
 EXPOSE 8080
 
-CMD ["/bin/sh", "/opt/app/startup.sh"]
+ENTRYPOINT ["/opt/app/startup.sh"]

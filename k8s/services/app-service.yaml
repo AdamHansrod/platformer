@@ -1,0 +1,41 @@
+# Expose the service to be available
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-world-service
+  labels:
+    app: hello-world
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: hello-world
+---
+# Control the rollout, and replication of the service's pods
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: hello-world-deployment
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: hello-world
+    spec:
+      containers:
+      - name: hello-world
+        image: 192.168.99.1:5000/platformer/app-base:latest
+        args: ["hello-world", "repository-service.default.svc.cluster.local"]
+        livenessProbe:
+          httpGet:
+            path: /greeting
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 120
+          timeoutSeconds: 5
+        ports:
+        - containerPort: 8080

@@ -1,0 +1,41 @@
+# Control the rollout, and replication of the service's pods
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: repository
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: repository
+    spec:
+      volumes:
+      - name: repository-pv-storage
+        persistentVolumeClaim:
+         claimName: repository-pv-claim
+      containers:
+      - name: repository
+        image: 192.168.99.1:5000/platformer/repository:latest
+        livenessProbe:
+          httpGet:
+            path: /config/hello-world/hello-world.config
+            port: 80
+            scheme: HTTP
+        ports:
+        - containerPort: 80
+        volumeMounts:
+          - mountPath: "/usr/share/nginx/html"
+            name: repository-pv-storage
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+ name: repository-pv-claim
+spec:
+ storageClassName: manual
+ accessModes:
+   - ReadWriteOnce
+ resources:
+   requests:
+     storage: 500Mi

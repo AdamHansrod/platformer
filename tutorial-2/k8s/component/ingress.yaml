@@ -1,0 +1,19 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: hello-world.minikube.dev
+  annotations:
+    ingress.kubernetes.io/rewrite-target: /
+spec:
+  # Supplied as part of minikube addon
+  backend:
+    serviceName: default-http-backend
+    servicePort: 80
+  rules:
+  - host: hello-world.minikube.dev
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: hello-world
+          servicePort: 80

@@ -1,0 +1,15 @@
+# Expose the service to be available
+apiVersion: v1
+kind: Service
+metadata:
+  name: repository
+  labels:
+    app: repository
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: repository

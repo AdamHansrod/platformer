@@ -44,17 +44,17 @@ Now we’ve got an architecture to base our work on, let’s start building our 
 
 For the DNS service, we’re going to use [devdns](https://github.com/ruudud/devdns), which will allow us to use hostnames within the platform, rather than hardcoding IP addresses.
 
-For the Repository and Load Balancer components we going to use a docker [nginx](https://docs.docker.com/samples/library/nginx/) image then extended with different configs
+For the Repository and Load Balancer components we're going to use a docker [nginx](https://docs.docker.com/samples/library/nginx/) image, extended with different configs.
 
 
-First lets create our first actual Docker image, based off the canonical nginx image, that will serve as our load balancer for the platform
+First let's create our first actual Docker image, based off the canonical nginx image, that will serve as our load balancer for the platform
 
 ```
 $> cd loadbalancer
 $> docker build --tag platformer/loadbalancer:latest .
 ```
 
-Now lets create our repository service image. For our purposes, this service is going to serve the app and config artefacts for our hello-world app. In a real-world scenario the artefacts/config functionality might not be needed at all, or could be a proxy to an production grade artefact/config solutions such as artifactory/s3 or vault
+Now let's create our repository service image. For our purposes, this service is going to serve the app and config artefacts for our hello-world app. In a real-world scenario the artefacts/config functionality might not be needed at all, or could be a proxy to an production grade artefact/config solutions such as artifactory/s3 or vault
 
 ```
 $> cd repository
@@ -70,12 +70,18 @@ $> docker build --tag platformer/app-base:latest .
 
 ### Starting up our platform
 
-Now we’ve got the images, lets boot up using our earlier bootstrap sequence
+Now we’ve got the images, let's boot up using our earlier bootstrap sequence
 ```
 # Start DNS 
 $> docker run -d --name dns -e DNS_DOMAIN=platform -p 53:53/udp  -v /var/run/docker.sock:/var/run/docker.sock ruudud/devdns
 # Start Repository
 $> docker run -v repository/nginx:/usr/share/nginx/html:ro -p 80:80 --dns=`docker inspect -f "{{ .NetworkSettings.IPAddress }}" dns` -d platformer/repository
+^ above step gave me error:
+```
+mattlap:~/github/platformer/tutorial-1 mralph$ docker run -v repository/nginx:/usr/share/nginx/html:ro -p 80:80 --dns=`docker inspect -f "{{ .NetworkSettings.IPAddress }}" dns` -d platformer/repository
+
+docker: Error response from daemon: create repository/nginx: "repository/nginx" includes invalid characters for a local volume name, only "[a-zA-Z0-9][a-zA-Z0-9_.-]" are allowed. If you intended to pass a host directory, use absolute path.
+```
 
 #Test the repository service is sharing the locally mounted files
 $> curl localhost:80/config/hello-world/hello-world.config

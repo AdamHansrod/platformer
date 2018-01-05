@@ -82,6 +82,10 @@ mattlap:~/github/platformer/tutorial-1 mralph$ docker run -v repository/nginx:/u
 
 docker: Error response from daemon: create repository/nginx: "repository/nginx" includes invalid characters for a local volume name, only "[a-zA-Z0-9][a-zA-Z0-9_.-]" are allowed. If you intended to pass a host directory, use absolute path.
 ```
+The following seems to fix:
+```
+docker run -v $(pwd)/repository/nginx:/usr/share/nginx/html:ro -p 80:80 --dns=`docker inspect -f "{{ .NetworkSettings.IPAddress }}" dns` -d platformer/repository
+```
 
 #Test the repository service is sharing the locally mounted files
 $> curl localhost:80/config/hello-world/hello-world.config

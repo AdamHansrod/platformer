@@ -76,7 +76,7 @@ Now we’ve got the images, let's boot up using our earlier bootstrap sequence
 $> docker run -d --name dns -e DNS_DOMAIN=platform -p 53:53/udp  -v /var/run/docker.sock:/var/run/docker.sock ruudud/devdns
 # Start Repository
 $> docker run -v repository/nginx:/usr/share/nginx/html:ro -p 80:80 --dns=`docker inspect -f "{{ .NetworkSettings.IPAddress }}" dns` -d platformer/repository
-^ above step gave me error:
+^ above step gave me error on Docker version 17.09.1-ce, build 19e2cf6:
 ```
 mattlap:~/github/platformer/tutorial-1 mralph$ docker run -v repository/nginx:/usr/share/nginx/html:ro -p 80:80 --dns=`docker inspect -f "{{ .NetworkSettings.IPAddress }}" dns` -d platformer/repository
 

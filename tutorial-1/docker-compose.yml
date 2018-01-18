@@ -1,0 +1,46 @@
+# version relates to docker-compose version, not file version
+version: '3'
+
+services:
+    dns:
+      container_name: dns
+      image: ruudud/devdns
+      ports:
+        - "53:53/udp"
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+      dns: 192.168.1.1
+
+    repository:
+      container_name: repository
+      depends_on:
+        - dns
+      image: platformer/repository
+      ports:
+        - "80:80/tcp"
+      volumes:
+        - ./repository/nginx:/usr/share/nginx/html:ro
+      dns: 192.168.1.1
+
+    loadbalancer:
+      container_name: loadbalancer
+      depends_on:
+        - dns
+      image: platformer/loadbalancer
+      ports:
+        - "80:80"
+      dns: 192.168.1.1
+
+    hello-world:
+      container_name: hello-world
+      depends_on:
+        - dns
+      image: platformer/app-base
+      ports:
+        - "8080:80"
+      dns: 192.168.1.1
+      command: hello-world repository.platform
+      environment:
+        APP_NAME: hello-world
+        REPO_BASE_URL: repository.platform
+        

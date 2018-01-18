@@ -7,7 +7,7 @@ We’re going have a few components:
 
 * A Load Balancer, which will use Nginx to load balance traffic for the rest of our platform components.
     
-    The load balancer, will allow us to pick our update strategy later (either blue-green deployments or rolling updates) by the way we change the nginx config files, as well as being able to horizontally scale against requests to our hosted apps or our repository component
+    The load balancer, will allow us to pick our update strategy later (for example blue-green deployments or rolling updates) by the way we change the nginx config files, as well as being able to horizontally scale against requests to our hosted apps or our repository component
 
 * A Repository, that will host all our config and app artefacts
 
@@ -19,7 +19,7 @@ We’re going have a few components:
 
     * Start an app up via the config startup command
 
-    The app image to enables us to provide a generic container and common dependencies to each app we want to host on our platform.
+    The app image to enables us to provide a generic logical container for the apps to run in. This allows us to have one common place to update when issues arise with the dependencies inside the container, for example security vulnerabilities. Simply update the app image, and redeploy all the apps to your platform, contrasting each app having it's own docker image that would need to be updated in the same scenario.
 
 
 The bootstrap process is:
@@ -75,17 +75,7 @@ Now we’ve got the images, let's boot up using our earlier bootstrap sequence
 # Start DNS 
 $> docker run -d --name dns -e DNS_DOMAIN=platform -p 53:53/udp  -v /var/run/docker.sock:/var/run/docker.sock ruudud/devdns
 # Start Repository
-$> docker run -v repository/nginx:/usr/share/nginx/html:ro -p 80:80 --dns=`docker inspect -f "{{ .NetworkSettings.IPAddress }}" dns` -d platformer/repository
-^ above step gave me error on Docker version 17.09.1-ce, build 19e2cf6:
-```
-mattlap:~/github/platformer/tutorial-1 mralph$ docker run -v repository/nginx:/usr/share/nginx/html:ro -p 80:80 --dns=`docker inspect -f "{{ .NetworkSettings.IPAddress }}" dns` -d platformer/repository
-
-docker: Error response from daemon: create repository/nginx: "repository/nginx" includes invalid characters for a local volume name, only "[a-zA-Z0-9][a-zA-Z0-9_.-]" are allowed. If you intended to pass a host directory, use absolute path.
-```
-The following seems to fix:
-```
-docker run -v $(pwd)/repository/nginx:/usr/share/nginx/html:ro -p 80:80 --dns=`docker inspect -f "{{ .NetworkSettings.IPAddress }}" dns` -d platformer/repository
-```
+$> docker run -v $(pwd)/repository/nginx:/usr/share/nginx/html:ro -p 80:80 --dns=`docker inspect -f "{{ .NetworkSettings.IPAddress }}" dns` -d platformer/repository
 
 #Test the repository service is sharing the locally mounted files
 $> curl localhost:80/config/hello-world/hello-world.config
@@ -101,7 +91,7 @@ $> docker run -P --name hello-world --dns=`docker inspect -f "{{ .NetworkSetting
 Hopefully, that should have come up all working and fine, and we now have our own 
 platform on our local machine!
 ```
-$> curl -v localhost:80/greeting
+$> curl -v localhost:8080/greeting
 ```
 
 #### Deploying new applications and further work

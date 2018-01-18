@@ -1,4 +1,4 @@
-# platformer - Creating a scalable app platform
+# platformer - Creating a scalable app platform, first locally, then the cloud.
 
 ## Tutorial #1 Designing & Creating our first platform
 ### Docker Platform Architecture
@@ -7,11 +7,11 @@ We’re going have a few components:
 
 * A Load Balancer, which will use Nginx to load balance traffic for the rest of our platform components.
     
-    The load balancer, will allow us to pick our update strategy later (for example blue-green deployments or rolling updates) by the way we change the nginx config files, as well as being able to horizontally scale against requests to our hosted apps or our repository component
+    The load balancer, will allow us to pick our update strategy for swapping out different versions of our apps later (for example blue-green deployments or rolling updates) by the way we change the nginx config files, as well as enabling us to horizontally scale against requests to our apps or our repository component
 
 * A Repository, that will host all our config and app artefacts
 
-* Our app image, which on boot will run startup.sh that will bootstrap our webapps, were going to provide an app name to as a parameter, which startup.sh will use to:
+* Our app image, which on boot will bootstrap our via startup.sh.The bootstrap script will:
 
     * Download the app from the repository service
 
@@ -19,10 +19,10 @@ We’re going have a few components:
 
     * Start an app up via the config startup command
 
-    The app image to enables us to provide a generic logical container for the apps to run in. This allows us to have one common place to update when issues arise with the dependencies inside the container, for example security vulnerabilities. Simply update the app image, and redeploy all the apps to your platform, contrasting each app having it's own docker image that would need to be updated in the same scenario.
+    The app image enables us to provide a generic logical container for the apps to run in. This allows us to have one common place to update when issues arise with the dependencies inside the container, for example security vulnerabilities. Simply update the app image, and redeploy all the apps to your platform, contrasting each app having it's own docker image that would need to be updated in the same scenario.
 
 
-The bootstrap process is:
+The bootstrap process for our platform is:
 
 * Start DNS
 
@@ -42,19 +42,19 @@ Our docker images that will serve as a base for our config service and our main 
 #### Creating the images
 Now we’ve got an architecture to base our work on, let’s start building our docker images.
 
-For the DNS service, we’re going to use [devdns](https://github.com/ruudud/devdns), which will allow us to use hostnames within the platform, rather than hardcoding IP addresses.
+For the DNS service, we’re going to use [devdns](https://github.com/ruudud/devdns), which will allow us to use hostnames within the platform, rather than hardcoding IP addresses. 
 
 For the Repository and Load Balancer components we're going to use a docker [nginx](https://docs.docker.com/samples/library/nginx/) image, extended with different configs.
 
 
-First let's create our first actual Docker image, based off the canonical nginx image, that will serve as our load balancer for the platform
+First let's create a Docker image, that will serve as our load balancer for the platform
 
 ```
 $> cd loadbalancer
 $> docker build --tag platformer/loadbalancer:latest .
 ```
 
-Now let's create our repository service image. For our purposes, this service is going to serve the app and config artefacts for our hello-world app. In a real-world scenario the artefacts/config functionality might not be needed at all, or could be a proxy to an production grade artefact/config solutions such as artifactory/s3 or vault
+Now let's create our repository service image. For our purposes, this service is going to serve the app and config artefacts for our hello-world app. Later on the artefacts/config functionality might not be needed at all, or could be a proxy to artefact/config solutions such as artifactory/s3 or vault.
 
 ```
 $> cd repository
@@ -135,17 +135,20 @@ Now we have our own little pseudo-platform that allows us to deploy any number o
 *[Minikube Dnsmasq wrapper installed](https://github.com/superbrothers/minikube-ingress-dns )
 
 ### Kubernetes Platform Architecture
-We now have a choice whether we’re going to continue the use of our platform DNS component and load balancing components and run them as ‘headless’ services in kubernetes terminology, or use the in-built kubernetes kube-dns and Ingress services to manage this functionality within the platform.
+We now have a choice whether we’re going to continue the use of our platform DNS component and load balancing components and run them as ‘headless’ services in kubernetes terminology, or use the in-built kubernetes kube-dns and Ingress services to manage this functionality within our platform.
 
 For the purpose of using and learning more kubernetes features, we’re going to use the kube-dns and Ingress features of Kubernetes, leaving us just with the App and the Repository components.
 
-We’re going to encapsulate our App and Repository images into their own Pods, which will allow us to govern how those containers will run.
+We will encapsulate our App and Repository images into their own Pods, which will allow us to govern how those containers will run.
 
-To manage our Pods, we’ll use the Deployment resource, which will internally manages a Replica Sets that ensures there are enough Pods to satisfy according to the configuration.
+To manage those Pods, we’ll use Deployment resources, which will internally manage a Replica Sets that ensures there are enough Pods to satisfy according to the configuration.
 
-To enable interaction with the Pods (which are inherently disposable), we’ll expose a consistent way to access them by using a Kubernetes a Service. 
+To enable cluster network ingress to the Pods (which are inherently disposable), we’ll expose them by using a Service. 
 
-The bootstrap process is:
+To enable external network ingress to our services, the Ingress resource will take requests and forward them to the Services.
+
+The platform bootstrap process is now:
+
 * Start local docker repository
 
 * Start minikube cluster
